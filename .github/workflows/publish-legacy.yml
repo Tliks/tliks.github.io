@@ -19,17 +19,17 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Fetch and validate current index
+      - uses: actions/checkout@v4
+      - name: Prepare and validate saved index
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p public/vpm-repos
-          curl --fail --location --retry 3 --output index.json https://aoyonn.github.io/vpm-repos/index.json
           python3 - <<'PY'
           import json
           from pathlib import Path
 
-          index = json.loads(Path('index.json').read_text(encoding='utf-8'))
+          index = json.loads(Path('index-baseline.json').read_text(encoding='utf-8'))
           if index.get('id') != 'com.aoyon.vpm' or not index.get('packages'):
               raise ValueError('Unexpected or empty VPM index; refusing to deploy')
 
