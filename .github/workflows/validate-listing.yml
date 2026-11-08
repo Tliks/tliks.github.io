@@ -1,0 +1,48 @@
+name: Validate independent VPM listing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: vrchat-community/package-list-action
+          path: ci
+          clean: false
+      - name: Build independent listing
+        run: ci/build.cmd BuildMultiPackageListing --root "$GITHUB_WORKSPACE/ci" --list-publish-directory "$GITHUB_WORKSPACE/Website" --current-listing-url https://tliks.github.io/.listing-does-not-exist.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify all existing packages and hashes
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          baseline = json.loads(Path('index-baseline.json').read_text(encoding='utf-8'))
+          result = json.loads(Path('Website/index.json').read_text(encoding='utf-8'))
+          missing = []
+          changed = []
+          for package_id, package in baseline['packages'].items():
+              for version, original in package['versions'].items():
+                  candidate = result.get('packages', {}).get(package_id, {}).get('versions', {}).get(version)
+                  if not candidate:
+                      missing.append(f'{package_id}@{version}')
+                  elif candidate.get('zipSHA256') != original.get('zipSHA256'):
+                      changed.append(f'{package_id}@{version}')
+          print('Missing versions:', missing)
+          print('Changed hashes:', changed)
+          if missing or changed or result.get('id') != baseline.get('id'):
+              raise SystemExit('Refusing to deploy an incomplete or changed listing')
+          print('All existing package versions and hashes are preserved.')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: independent-vpm-listing
+          path: Website

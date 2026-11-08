@@ -1,0 +1,25 @@
+{
+  "name": "Ao_425",
+  "id": "com.aoyon.vpm",
+  "url": "https://tliks.github.io/vpm-repos/index.json",
+  "author": {
+    "name": "Ao_425",
+    "url": "https://github.com/aoyonn"
+  },
+  "infoLink": {
+    "url": "https://github.com/aoyonn/vpm-repos",
+    "text": "View on GitHub"
+  },
+  "githubRepos": [
+    "aoyonn/ModuleCreator",
+    "aoyonn/DuplicateAsVariant",
+    "aoyonn/SceneMeshUtils",
+    "aoyonn/TriangleSelector",
+    "aoyonn/AutoConfigureTexture",
+    "aoyonn/GitAutomation",
+    "aoyonn/OverallNDMFMeshSimplifier",
+    "aoyonn/AO-Material-Editor",
+    "aoyonn/aoyon.gameobject-menu-managaer"
+  ],
+  "packages": []
+}

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VCCに追加</title>
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=vcc://vpm/addRepo?url={{ listingInfo.Url }}">
+  </noscript>
+</head>
+<body>
+  <p>VCCを開いています…</p>
+  <p>
+    <a id="open-vcc" href="vcc://vpm/addRepo?url={{ listingInfo.Url }}">自動で開かない場合はこちら</a>
+  </p>
+  <p>
+    <a href="{{ listingInfo.Url }}">リポジトリURLを開く</a>
+  </p>
+  <script src="app.js"></script>
+</body>
+</html>
