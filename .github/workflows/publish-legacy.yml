@@ -24,14 +24,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p public/vpm-repos
+          mkdir -p public/vpm-repos public/facetune-release
           python3 - <<'PY'
           import json
           from pathlib import Path
-
-          index = json.loads(Path('index-baseline.json').read_text(encoding='utf-8'))
-          if index.get('id') != 'com.aoyon.vpm' or not index.get('packages'):
-              raise ValueError('Unexpected or empty VPM index; refusing to deploy')
 
           def update_urls(value):
               if isinstance(value, dict):
@@ -42,9 +38,17 @@ jobs:
                   return value.replace('https://github.com/Tliks/', 'https://github.com/aoyonn/').replace('https://github.com/tliks/', 'https://github.com/aoyonn/')
               return value
 
-          index = update_urls(index)
-          index['url'] = 'https://tliks.github.io/vpm-repos/index.json'
-          Path('public/vpm-repos/index.json').write_text(json.dumps(index, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          listings = [
+              ('index-baseline.json', 'com.aoyon.vpm', 'vpm-repos'),
+              ('facetune-index-baseline.json', 'com.aoyon.ft-vpm', 'facetune-release'),
+          ]
+          for source, expected_id, path in listings:
+              index = json.loads(Path(source).read_text(encoding='utf-8'))
+              if index.get('id') != expected_id or not index.get('packages'):
+                  raise ValueError(f'Unexpected or empty VPM index: {source}')
+              index = update_urls(index)
+              index['url'] = f'https://tliks.github.io/{path}/index.json'
+              Path(f'public/{path}/index.json').write_text(json.dumps(index, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
           PY
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
