@@ -1,0 +1,55 @@
+name: Publish legacy VPM index
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Fetch and validate current index
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/vpm-repos
+          curl --fail --location --retry 3 --output index.json https://aoyonn.github.io/vpm-repos/index.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          index = json.loads(Path('index.json').read_text(encoding='utf-8'))
+          if index.get('id') != 'com.aoyon.vpm' or not index.get('packages'):
+              raise ValueError('Unexpected or empty VPM index; refusing to deploy')
+
+          def update_urls(value):
+              if isinstance(value, dict):
+                  return {key: update_urls(item) for key, item in value.items()}
+              if isinstance(value, list):
+                  return [update_urls(item) for item in value]
+              if isinstance(value, str):
+                  return value.replace('https://github.com/Tliks/', 'https://github.com/aoyonn/').replace('https://github.com/tliks/', 'https://github.com/aoyonn/')
+              return value
+
+          index = update_urls(index)
+          index['url'] = 'https://tliks.github.io/vpm-repos/index.json'
+          Path('public/vpm-repos/index.json').write_text(json.dumps(index, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
