@@ -1,0 +1,27 @@
+name: Diagnose release download
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test release URL and API from runner
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          url='https://github.com/aoyonn/ModuleCreator/releases/download/0.6.2/com.aoyon.module-creator-0.6.2.zip'
+          echo 'Release URL, no redirect:'
+          curl --max-time 30 --silent --show-error -o /dev/null -w 'HTTP %{http_code}\n' "$url"
+          echo 'Release URL, follow redirects:'
+          curl --max-time 45 --silent --show-error -L -o /tmp/package.zip -w 'HTTP %{http_code}, bytes %{size_download}\n' "$url"
+          if test -f /tmp/package.zip; then sha256sum /tmp/package.zip; fi
+          echo 'GitHub API asset metadata:'
+          gh api repos/aoyonn/ModuleCreator/releases/assets/304654856 --jq '{id,name,size,digest}'
+          echo 'GitHub API asset download:'
+          gh api -H 'Accept: application/octet-stream' repos/aoyonn/ModuleCreator/releases/assets/304654856 > /tmp/api-package.zip
+          echo "gh exit: $?"
+          if test -s /tmp/api-package.zip; then wc -c /tmp/api-package.zip; sha256sum /tmp/api-package.zip; fi
