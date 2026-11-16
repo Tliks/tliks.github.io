@@ -49,6 +49,15 @@ jobs:
               index = update_urls(index)
               index['url'] = f'https://tliks.github.io/{path}/index.json'
               Path(f'public/{path}/index.json').write_text(json.dumps(index, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+
+              # Restore the original VCC launcher alongside the JSON listing.
+              for filename in ('index.html', 'app.js'):
+                  template = Path(f'Website/{filename}').read_text(encoding='utf-8')
+                  rendered = template.replace('{{ listingInfo.Url }}', index['url'])
+                  if '{{' in rendered:
+                      raise ValueError(f'Unresolved launcher template: {filename}')
+                  Path(f'public/{path}/{filename}').write_text(rendered, encoding='utf-8')
+
           PY
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
